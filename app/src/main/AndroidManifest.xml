@@ -8,6 +8,7 @@
     android:roundIcon="@mipmap/ic_launcher_round"
     android:supportsRtl="true"
     android:theme="@style/AppTheme">
+
     <receiver android:name="CalendarAppWidgetProvider">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -16,5 +17,6 @@
         android:name="android.appwidget.provider"
         android:resource="@xml/calendar_appwidget_info" />
     </receiver>
+
   </application>
 </manifest>

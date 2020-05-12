@@ -3,6 +3,6 @@
   android:minWidth="40dp"
   android:minHeight="40dp"
   android:updatePeriodMillis="300000"
-  android:initialLayout="@layout/calendar_appwidget"
-  android:resizeMode="vertical"
+  android:initialLayout="@layout/empty"
+  android:resizeMode="vertical | horizontal"
   android:widgetCategory="home_screen" />
