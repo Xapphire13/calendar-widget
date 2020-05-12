@@ -18,5 +18,9 @@
         android:resource="@xml/calendar_appwidget_info" />
     </receiver>
 
+    <service
+      android:name="CalendarAppWidgetService"
+      android:permission="android.permission.BIND_REMOTEVIEWS" />
+
   </application>
 </manifest>

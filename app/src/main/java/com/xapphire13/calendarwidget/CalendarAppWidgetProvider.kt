@@ -3,8 +3,9 @@ package com.xapphire13.calendarwidget
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.widget.RemoteViews
-import java.util.stream.IntStream
 
 class CalendarAppWidgetProvider : AppWidgetProvider() {
   override fun onUpdate(
@@ -12,20 +13,19 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
     appWidgetManager: AppWidgetManager,
     appWidgetIds: IntArray
   ) {
-    super.onUpdate(context, appWidgetManager, appWidgetIds)
-
-    appWidgetIds.forEach {
-      val rv = RemoteViews(context.packageName, R.layout.widget)
-      rv.removeAllViews(R.id.item_container)
-
-      IntStream.range(0, 5).forEach { i ->
-        val item = RemoteViews(context.packageName, R.layout.calendar_item)
-        item.setTextViewText(R.id.calendar_item_text, "Test" + (i + 1))
-
-        rv.addView(R.id.item_container, item);
+    appWidgetIds.forEach { appWidgetId ->
+      val intent = Intent(context, CalendarAppWidgetService::class.java).apply {
+        putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        data = Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
       }
 
-      appWidgetManager.updateAppWidget(it, rv)
+      val rv = RemoteViews(context.packageName, R.layout.widget).apply {
+        setRemoteAdapter(R.id.item_grid, intent)
+      }
+
+      appWidgetManager.updateAppWidget(appWidgetId, rv)
     }
+
+    super.onUpdate(context, appWidgetManager, appWidgetIds)
   }
 }
