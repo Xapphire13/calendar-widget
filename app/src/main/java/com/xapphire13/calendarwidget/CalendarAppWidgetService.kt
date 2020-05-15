@@ -8,12 +8,11 @@ import java.time.LocalDateTime
 
 class CalendarAppWidgetService : RemoteViewsService() {
   override fun onGetViewFactory(intent: Intent): RemoteViewsFactory =
-    CalendarAppWidgetFactory(this.applicationContext, intent)
+    CalendarAppWidgetFactory(this.applicationContext)
 }
 
 class CalendarAppWidgetFactory(
-  private val context: Context,
-  intent: Intent
+  private val context: Context
 ) : RemoteViewsService.RemoteViewsFactory {
   private val calendarItems: List<CalendarItem> = listOf(
     CalendarItem(
@@ -22,7 +21,17 @@ class CalendarAppWidgetFactory(
       LocalDateTime.now()
     ),
     CalendarItem(
+      "Another event",
+      LocalDateTime.now().minusDays(1),
+      LocalDateTime.now()
+    ),
+    CalendarItem(
       "My 10 o' clock",
+      LocalDateTime.of(2020, 1, 1, 10, 0),
+      LocalDateTime.of(2020, 1, 1, 11, 0)
+    ),
+    CalendarItem(
+      "☕️ break",
       LocalDateTime.of(2020, 1, 1, 10, 34),
       LocalDateTime.of(2020, 1, 1, 12, 0)
     ),
@@ -38,7 +47,7 @@ class CalendarAppWidgetFactory(
   override fun onCreate() {
     val (allDayItems, otherItems) = calendarItems.partition { it.isAllDay() }
     val itemsByTime =
-      otherItems.associateBy({ it.start.hour }, { it })
+      otherItems.groupBy({ it.start.hour }, { it })
 
     allDayItems.forEachIndexed { i, item ->
       val key = if (i == 0) "all-day" else ""
@@ -60,9 +69,12 @@ class CalendarAppWidgetFactory(
 
       val key =
         if (hour == 0) "midnight" else if (hour < 12) "$hour AM" else if (hour == 12) "12 PM" else "${hour - 12} PM"
-      val item = itemsByTime.get(hour)
 
-      items.add(Pair(key, item))
+      itemsByTime[hour]?.sortedBy { it.start }?.forEachIndexed { i, item ->
+        items.add(Pair(if (i == 0) key else "", item))
+      } ?: run {
+        items.add(Pair(key, null))
+      }
     }
   }
 
@@ -85,7 +97,10 @@ class CalendarAppWidgetFactory(
       setTextViewText(R.id.time_label_text, key)
     }
 
-    val calendarItem = RemoteViews(context.packageName, R.layout.calendar_item).apply {
+    val calendarItem = RemoteViews(
+      context.packageName,
+      if (item?.isAllDay() == true) R.layout.all_day_calendar_item else R.layout.calendar_item
+    ).apply {
       setTextViewText(R.id.calendar_item_text, item?.name)
     }
 
