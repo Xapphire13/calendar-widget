@@ -1,5 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   package="com.xapphire13.calendarwidget">
+
+  <uses-permission android:name="android.permission.READ_CALENDAR" />
 
   <application
     android:allowBackup="true"
@@ -9,18 +12,28 @@
     android:supportsRtl="true"
     android:theme="@style/AppTheme">
 
-    <receiver android:name="CalendarAppWidgetProvider">
+    <activity
+      android:name=".ConfigureWidgetActivity"
+      android:label="@string/title_activity_configure_widget"
+      android:theme="@style/AppTheme.AppBarOverlay">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+      </intent-filter>
+    </activity>
+
+    <receiver android:name=".CalendarAppWidgetProvider">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
       </intent-filter>
+
       <meta-data
         android:name="android.appwidget.provider"
         android:resource="@xml/calendar_appwidget_info" />
     </receiver>
 
     <service
-      android:name="CalendarAppWidgetService"
+      android:name=".CalendarAppWidgetService"
       android:permission="android.permission.BIND_REMOTEVIEWS" />
-
   </application>
+
 </manifest>
