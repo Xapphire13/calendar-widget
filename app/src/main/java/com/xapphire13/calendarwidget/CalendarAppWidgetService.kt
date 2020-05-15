@@ -5,7 +5,6 @@ import android.content.Intent
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 class CalendarAppWidgetService : RemoteViewsService() {
   override fun onGetViewFactory(intent: Intent): RemoteViewsFactory =
@@ -59,12 +58,9 @@ class CalendarAppWidgetFactory(
         return@forEach
       }
 
-      val item = itemsByTime.get(hour)
-      var key = if (item != null) {
-        item.start.format(DateTimeFormatter.ofPattern("h a"))
-      } else {
+      val key =
         if (hour == 0) "midnight" else if (hour < 12) "$hour AM" else if (hour == 12) "12 PM" else "${hour - 12} PM"
-      }
+      val item = itemsByTime.get(hour)
 
       items.add(Pair(key, item))
     }
@@ -81,34 +77,31 @@ class CalendarAppWidgetFactory(
   override fun hasStableIds(): Boolean = true
 
   override fun getViewAt(position: Int): RemoteViews {
-    val col = position % 2;
-    val row = position / 2;
-    val (key, item) = items[row]
+    val (key, item) = items[position]
 
-    println(position)
-    println(key)
-    println(item)
+    val rv = RemoteViews(context.packageName, R.layout.calendar_row)
 
-    val rv = if (col == 0) {
-      // Label
-      RemoteViews(context.packageName, R.layout.time_label).apply {
-        setTextViewText(R.id.time_label_text, key)
-      }
-    } else {
-      // Item
-      RemoteViews(context.packageName, R.layout.calendar_item).apply {
-        setTextViewText(R.id.calendar_item_text, item?.name)
-      }
+    val label = RemoteViews(context.packageName, R.layout.time_label).apply {
+      setTextViewText(R.id.time_label_text, key)
+    }
+
+    val calendarItem = RemoteViews(context.packageName, R.layout.calendar_item).apply {
+      setTextViewText(R.id.calendar_item_text, item?.name)
+    }
+
+    rv.apply {
+      addView(R.id.calendar_row_root, label)
+      addView(R.id.calendar_row_root, calendarItem)
     }
 
     return rv
   }
 
   override fun getCount(): Int {
-    return 2 * items.size
+    return items.size
   }
 
-  override fun getViewTypeCount(): Int = 2
+  override fun getViewTypeCount(): Int = 1
 
   override fun onDestroy() {}
 

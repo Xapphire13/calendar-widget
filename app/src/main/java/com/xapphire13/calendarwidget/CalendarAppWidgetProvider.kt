@@ -20,7 +20,7 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
       }
 
       val rv = RemoteViews(context.packageName, R.layout.widget).apply {
-        setRemoteAdapter(R.id.item_grid, intent)
+        setRemoteAdapter(R.id.widget_list, intent)
       }
 
       appWidgetManager.updateAppWidget(appWidgetId, rv)

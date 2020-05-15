@@ -5,10 +5,9 @@
   android:layout_height="match_parent"
   android:padding="8dp">
 
-  <GridView
-    android:id="@+id/item_grid"
+  <ListView
+    android:id="@+id/widget_list"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:numColumns="2" />
+    android:layout_height="match_parent" />
 
 </FrameLayout>
