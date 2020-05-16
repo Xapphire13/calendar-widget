@@ -16,7 +16,7 @@ class CalendarAppWidgetService : RemoteViewsService() {
 class CalendarAppWidgetFactory(
   private val context: Context
 ) : RemoteViewsService.RemoteViewsFactory {
-  private val items: MutableList<Pair<String, CalendarItem?>> = mutableListOf()
+  private val items: MutableList<Pair<String, List<CalendarItem>>> = mutableListOf()
 
   override fun onCreate() {
     val calendarId = context.getSharedPreferences("calendar", Context.MODE_PRIVATE).getLong("id", 0)
@@ -25,14 +25,21 @@ class CalendarAppWidgetFactory(
       listEventsAsync(context.contentResolver, calendarId).await()
     }
 
-    val (allDayItems, otherItems) = calendarItems.partition { it.isAllDay() }
-    val itemsByTime =
-      otherItems.groupBy({ it.start.toLocalDateTime().hour }, { it })
+    val (allDayItems, otherItems) = calendarItems.sortedBy { it.start }.partition { it.isAllDay() }
+    val itemsByTime = mutableMapOf<Int, MutableList<CalendarItem>>()
+    otherItems.forEach {
+      val startHour = it.start.toLocalDateTime().hour
+      val endHour =
+        it.end.toLocalDateTime().hour.let { endHour -> if (it.end.toLocalDateTime().minute > 0) endHour + 1 else endHour }
 
-    allDayItems.forEachIndexed { i, item ->
-      val key = if (i == 0) "all-day" else ""
+      (startHour until endHour).forEach { hour ->
+        val items = itemsByTime.getOrPut(hour, { mutableListOf() })
+        items.add(it)
+      }
+    }
 
-      items.add(Pair(key, item))
+    if (allDayItems.isNotEmpty()) {
+      items.add(Pair("all-day", allDayItems))
     }
 
     if (otherItems.isEmpty()) {
@@ -50,10 +57,10 @@ class CalendarAppWidgetFactory(
       val key =
         if (hour == 0) "midnight" else if (hour < 12) "$hour AM" else if (hour == 12) "12 PM" else "${hour - 12} PM"
 
-      itemsByTime[hour]?.sortedBy { it.start }?.forEachIndexed { i, item ->
-        items.add(Pair(if (i == 0) key else "", item))
+      itemsByTime[hour]?.let {
+        items.add(Pair(key, it))
       } ?: run {
-        items.add(Pair(key, null))
+        items.add(Pair(key, listOf()))
       }
     }
   }
@@ -69,7 +76,11 @@ class CalendarAppWidgetFactory(
   override fun hasStableIds(): Boolean = false
 
   override fun getViewAt(position: Int): RemoteViews {
-    val (key, item) = items[position]
+    val (key, items) = items[position]
+
+    println("$position $key $items")
+
+    // TODO, all day row
 
     val rv = RemoteViews(context.packageName, R.layout.calendar_row)
 
@@ -77,16 +88,17 @@ class CalendarAppWidgetFactory(
       setTextViewText(R.id.time_label_text, key)
     }
 
-    val calendarItem = RemoteViews(
-      context.packageName,
-      if (item?.isAllDay() == true) R.layout.all_day_calendar_item else R.layout.calendar_item
-    ).apply {
-      setTextViewText(R.id.calendar_item_text, item?.name)
+    val calendarItems = items.map { item ->
+      RemoteViews(context.packageName, R.layout.calendar_item).apply {
+        setTextViewText(R.id.calendar_item_text, item.name)
+      }
     }
 
     rv.apply {
       addView(R.id.calendar_row_root, label)
-      addView(R.id.calendar_row_root, calendarItem)
+      calendarItems.forEach {
+        addView(R.id.calendar_row_root, it)
+      }
     }
 
     return rv
