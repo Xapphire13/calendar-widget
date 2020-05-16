@@ -4,7 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
-import java.time.LocalDateTime
+import com.xapphire13.calendarwidget.extensions.toLocalDateTime
+import com.xapphire13.calendarwidget.utils.listEventsAsync
+import kotlinx.coroutines.runBlocking
 
 class CalendarAppWidgetService : RemoteViewsService() {
   override fun onGetViewFactory(intent: Intent): RemoteViewsFactory =
@@ -14,40 +16,18 @@ class CalendarAppWidgetService : RemoteViewsService() {
 class CalendarAppWidgetFactory(
   private val context: Context
 ) : RemoteViewsService.RemoteViewsFactory {
-  private val calendarItems: List<CalendarItem> = listOf(
-    CalendarItem(
-      "Test all day event",
-      LocalDateTime.now().minusDays(1),
-      LocalDateTime.now()
-    ),
-    CalendarItem(
-      "Another event",
-      LocalDateTime.now().minusDays(1),
-      LocalDateTime.now()
-    ),
-    CalendarItem(
-      "My 10 o' clock",
-      LocalDateTime.of(2020, 1, 1, 10, 0),
-      LocalDateTime.of(2020, 1, 1, 11, 0)
-    ),
-    CalendarItem(
-      "☕️ break",
-      LocalDateTime.of(2020, 1, 1, 10, 34),
-      LocalDateTime.of(2020, 1, 1, 12, 0)
-    ),
-    CalendarItem(
-      "1:1 w/Tim",
-      LocalDateTime.of(2020, 1, 1, 15, 0),
-      LocalDateTime.of(2020, 1, 1, 15, 30)
-    )
-  )
-
   private val items: MutableList<Pair<String, CalendarItem?>> = mutableListOf()
 
   override fun onCreate() {
+    val calendarId = context.getSharedPreferences("calendar", Context.MODE_PRIVATE).getLong("id", 0)
+
+    val calendarItems = runBlocking {
+      listEventsAsync(context.contentResolver, calendarId).await()
+    }
+
     val (allDayItems, otherItems) = calendarItems.partition { it.isAllDay() }
     val itemsByTime =
-      otherItems.groupBy({ it.start.hour }, { it })
+      otherItems.groupBy({ it.start.toLocalDateTime().hour }, { it })
 
     allDayItems.forEachIndexed { i, item ->
       val key = if (i == 0) "all-day" else ""
@@ -59,8 +39,8 @@ class CalendarAppWidgetFactory(
       return
     }
 
-    val firstHour = otherItems.first().start.hour
-    val lastHour = otherItems.last().start.hour
+    val firstHour = otherItems.first().start.toLocalDateTime().hour
+    val lastHour = otherItems.last().start.toLocalDateTime().hour
 
     (0 until 24).forEach { hour ->
       if (hour < firstHour || hour > lastHour) {
@@ -86,7 +66,7 @@ class CalendarAppWidgetFactory(
 
   override fun onDataSetChanged() {}
 
-  override fun hasStableIds(): Boolean = true
+  override fun hasStableIds(): Boolean = false
 
   override fun getViewAt(position: Int): RemoteViews {
     val (key, item) = items[position]
