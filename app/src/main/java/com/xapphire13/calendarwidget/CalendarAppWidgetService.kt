@@ -2,6 +2,7 @@ package com.xapphire13.calendarwidget
 
 import android.content.Context
 import android.content.Intent
+import android.view.View
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
 import com.xapphire13.calendarwidget.extensions.toLocalDateTime
@@ -147,6 +148,12 @@ class CalendarAppWidgetFactory(
       cells[column] = RemoteViews(context.packageName, layout).apply {
         if (isStartOfItem) {
           setTextViewText(R.id.calendar_item_text, item.name)
+        }
+
+        if (item.status === CalendarItemStatus.ACCEPTED) {
+          setViewVisibility(R.id.accepted_background, View.VISIBLE)
+        } else {
+          setViewVisibility(R.id.pending_background, View.VISIBLE)
         }
       }
     }

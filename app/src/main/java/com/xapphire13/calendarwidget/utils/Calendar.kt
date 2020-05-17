@@ -6,6 +6,7 @@ import android.content.ContentUris
 import android.provider.CalendarContract
 import com.xapphire13.calendarwidget.CalendarInfo
 import com.xapphire13.calendarwidget.CalendarItem
+import com.xapphire13.calendarwidget.CalendarItemStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -65,7 +66,8 @@ fun listEventsAsync(
       arrayOf(
         CalendarContract.Instances.TITLE,
         CalendarContract.Instances.DTSTART,
-        CalendarContract.Instances.DTEND
+        CalendarContract.Instances.DTEND,
+        CalendarContract.Instances.STATUS
       ),
       """
         ((${CalendarContract.Instances.CALENDAR_ID} = ?))
@@ -79,8 +81,21 @@ fun listEventsAsync(
         val title = cursor.getString(0)
         val dtStart = cursor.getLong(1)
         val dtEnd = cursor.getLong(2)
+        val status = cursor.getInt(3)
 
-        items.add(CalendarItem(title, Instant.ofEpochMilli(dtStart), Instant.ofEpochMilli(dtEnd)))
+        val calendarItemStatus = when (status) {
+          CalendarContract.Events.STATUS_CONFIRMED -> CalendarItemStatus.ACCEPTED
+          else -> CalendarItemStatus.PENDING
+        }
+
+        items.add(
+          CalendarItem(
+            title,
+            Instant.ofEpochMilli(dtStart),
+            Instant.ofEpochMilli(dtEnd),
+            calendarItemStatus
+          )
+        )
       }
     }
 
