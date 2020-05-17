@@ -18,6 +18,7 @@ class CalendarAppWidgetFactory(
 ) : RemoteViewsService.RemoteViewsFactory {
   private val items: MutableList<Pair<Int, List<CalendarItem>>> = mutableListOf()
   private val itemOverlap: MutableMap<CalendarItem, Int> = mutableMapOf()
+  private val itemColumn: MutableMap<CalendarItem, Int> = mutableMapOf()
 
   override fun onCreate() {
     val calendarId = context.getSharedPreferences("calendar", Context.MODE_PRIVATE).getLong("id", 0)
@@ -112,7 +113,12 @@ class CalendarAppWidgetFactory(
       maxOf(acc, itemOverlap.getOrDefault(item, 0))
     }
 
-    val calendarItemViews = calendarItems.map { item ->
+    val cells = arrayOfNulls<RemoteViews>(maxOverlap)
+
+    // Place items that have been placed before
+    calendarItems.filter { itemColumn.containsKey(it) }.forEach { item ->
+      val column =
+        itemColumn[item] ?: throw RuntimeException("Can't get column for item ${item.name}")
       val isStartOfItem = item.start.toLocalDateTime().hour == hour
       val isEndOfItem =
         (item.end.toLocalDateTime().hour.let { endHour -> if (item.end.toLocalDateTime().minute > 0) endHour + 1 else endHour }) - 1 == hour
@@ -122,24 +128,48 @@ class CalendarAppWidgetFactory(
         isEndOfItem -> R.layout.calendar_item_bottom
         else -> R.layout.calendar_item_mid
       }
-      RemoteViews(context.packageName, layout).apply {
+
+      cells[column] = RemoteViews(context.packageName, layout).apply {
         if (isStartOfItem) {
           setTextViewText(R.id.calendar_item_text, item.name)
         }
       }
     }
 
-    rv.apply {
-      addView(R.id.calendar_row_root, labelView)
-      calendarItemViews.forEach {
-        addView(R.id.calendar_row_root, it)
+    // Place items that are being placed for the first time
+    calendarItems.filter { !itemColumn.containsKey(it) }.forEach { item ->
+      val column = cells.indexOfFirst { it == null }
+
+      if (column == -1) {
+        throw RuntimeException("No space to add item ${item.name}")
       }
 
-      // Push empty items if the max overlap any item has exceeds the number of items for this row
-      if (maxOverlap > calendarItems.size) {
-        (0 until (maxOverlap - calendarItems.size)).forEach { _ ->
-          addView(R.id.calendar_row_root, RemoteViews(context.packageName, R.layout.blank_space))
+      val isStartOfItem = item.start.toLocalDateTime().hour == hour
+      val layout = when {
+        !item.isMultiHour() -> R.layout.calendar_item_full
+        else -> R.layout.calendar_item_top
+      }
+
+      cells[column] = RemoteViews(context.packageName, layout).apply {
+        if (isStartOfItem) {
+          setTextViewText(R.id.calendar_item_text, item.name)
         }
+      }
+
+      itemColumn[item] = column
+    }
+
+    // Fill the blanks
+    cells.forEachIndexed { i, _ ->
+      if (cells[i] == null) {
+        cells[i] = RemoteViews(context.packageName, R.layout.blank_space)
+      }
+    }
+
+    rv.apply {
+      addView(R.id.calendar_row_root, labelView)
+      cells.forEach {
+        addView(R.id.calendar_row_root, it)
       }
     }
 
