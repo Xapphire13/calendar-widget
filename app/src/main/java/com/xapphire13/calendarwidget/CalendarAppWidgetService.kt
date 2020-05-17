@@ -16,19 +16,21 @@ class CalendarAppWidgetService : RemoteViewsService() {
 class CalendarAppWidgetFactory(
   private val context: Context
 ) : RemoteViewsService.RemoteViewsFactory {
-  private val items: MutableList<Pair<Int, List<CalendarItem>>> = mutableListOf()
-  private val itemOverlap: MutableMap<CalendarItem, Int> = mutableMapOf()
+  private var allDayItems: List<CalendarItem> = listOf()
   private val itemColumn: MutableMap<CalendarItem, Int> = mutableMapOf()
+  private val itemOverlap: MutableMap<CalendarItem, Int> = mutableMapOf()
+  private var itemsByTime: MutableMap<Int, MutableList<CalendarItem>> = mutableMapOf()
 
   override fun onCreate() {
     val calendarId = context.getSharedPreferences("calendar", Context.MODE_PRIVATE).getLong("id", 0)
 
-    val calendarItems = runBlocking {
+    val allCalendarItems = runBlocking {
       listEventsAsync(context.contentResolver, calendarId).await()
     }
 
-    val (allDayItems, otherItems) = calendarItems.sortedBy { it.start }.partition { it.isAllDay() }
-    val itemsByTime = mutableMapOf<Int, MutableList<CalendarItem>>()
+    val (allDayItems, otherItems) = allCalendarItems.sortedBy { it.start }
+      .partition { it.isAllDay() }
+    this.allDayItems = allDayItems
     otherItems.forEach {
       val startHour = it.start.toLocalDateTime().hour
       val endHour =
@@ -40,29 +42,11 @@ class CalendarAppWidgetFactory(
       }
     }
 
-    if (allDayItems.isNotEmpty()) {
-      items.add(Pair(-1, allDayItems))
-    }
-
-    if (otherItems.isEmpty()) {
+    if (itemsByTime.isEmpty()) {
       return
     }
 
-    val firstHour =
-      otherItems.fold(Int.MAX_VALUE) { acc, item -> minOf(acc, item.start.toLocalDateTime().hour) }
-    val lastHour =
-      otherItems.fold(Int.MIN_VALUE) { acc, item -> maxOf(acc, item.end.toLocalDateTime().hour) }
-
-    (0 until 24).forEach { hour ->
-      if (hour < firstHour || hour > lastHour) {
-        return@forEach
-      }
-
-      itemsByTime[hour]?.let {
-        items.add(Pair(hour, it))
-      }
-    }
-
+    // Calculate overlaps
     (0 until 24).forEach { hour ->
       val itemsForHour = itemsByTime[hour];
 
@@ -73,6 +57,41 @@ class CalendarAppWidgetFactory(
       itemsForHour.forEach { item ->
         val overlap = itemOverlap.getOrPut(item, { 0 })
         itemOverlap[item] = maxOf(overlap, itemsForHour.size)
+      }
+    }
+
+    // Calculate columns for each item
+    (0 until 24).forEach { hour ->
+      val calendarItems = itemsByTime[hour]
+
+      if (calendarItems === null || calendarItems.isEmpty()) {
+        return@forEach
+      }
+
+      val maxOverlap = calendarItems.fold(0) { acc, item ->
+        maxOf(acc, itemOverlap.getOrDefault(item, 0))
+      }
+
+      val cells = (0 until maxOverlap).map { false }.toBooleanArray()
+
+      // Block out spaces that are already claimed
+      calendarItems.filter { itemColumn.containsKey(it) }.forEach { item ->
+        val column =
+          itemColumn[item] ?: throw RuntimeException("Can't get column for item ${item.name}")
+
+        cells[column] = true
+      }
+
+      // Find columns for unplaced items
+      calendarItems.filter { !itemColumn.containsKey(it) }.forEach { item ->
+        val column = cells.indexOfFirst { !it }
+
+        if (column == -1) {
+          throw RuntimeException("No space to add item ${item.name}")
+        }
+
+        cells[column] = true
+        itemColumn[item] = column
       }
     }
   }
@@ -88,7 +107,7 @@ class CalendarAppWidgetFactory(
   override fun hasStableIds(): Boolean = false
 
   override fun getViewAt(position: Int): RemoteViews {
-    val (hour, calendarItems) = items[position]
+    val (hour, calendarItems) = itemsByTime.entries.sortedBy { it.key }[position]
     val labelText = when {
       hour == -1 -> "all-day"
       hour == 0 -> "midnight"
@@ -111,7 +130,7 @@ class CalendarAppWidgetFactory(
 
     val cells = arrayOfNulls<RemoteViews>(maxOverlap)
 
-    // Place items that have been placed before
+    // Place items into their column
     calendarItems.filter { itemColumn.containsKey(it) }.forEach { item ->
       val column =
         itemColumn[item] ?: throw RuntimeException("Can't get column for item ${item.name}")
@@ -132,29 +151,6 @@ class CalendarAppWidgetFactory(
       }
     }
 
-    // Place items that are being placed for the first time
-    calendarItems.filter { !itemColumn.containsKey(it) }.forEach { item ->
-      val column = cells.indexOfFirst { it == null }
-
-      if (column == -1) {
-        throw RuntimeException("No space to add item ${item.name}")
-      }
-
-      val isStartOfItem = item.start.toLocalDateTime().hour == hour
-      val layout = when {
-        !item.isMultiHour() -> R.layout.calendar_item_full
-        else -> R.layout.calendar_item_top
-      }
-
-      cells[column] = RemoteViews(context.packageName, layout).apply {
-        if (isStartOfItem) {
-          setTextViewText(R.id.calendar_item_text, item.name)
-        }
-      }
-
-      itemColumn[item] = column
-    }
-
     // Fill the blanks
     cells.forEachIndexed { i, _ ->
       if (cells[i] == null) {
@@ -173,7 +169,7 @@ class CalendarAppWidgetFactory(
   }
 
   override fun getCount(): Int {
-    return items.size
+    return allDayItems.size + itemsByTime.entries.size
   }
 
   override fun getViewTypeCount(): Int = 1
