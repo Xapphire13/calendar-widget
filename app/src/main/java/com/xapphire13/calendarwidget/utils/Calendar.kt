@@ -11,6 +11,8 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 val bgScope = CoroutineScope(Dispatchers.IO)
@@ -52,7 +54,10 @@ fun listEventsAsync(
     val builder = CalendarContract.Instances.CONTENT_URI.buildUpon()
     val items = mutableListOf<CalendarItem>()
 
-    ContentUris.appendId(builder, Instant.now().toEpochMilli())
+    ContentUris.appendId(
+      builder,
+      LocalDate.now().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    )
     ContentUris.appendId(builder, Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
 
     contentResolver.query(
@@ -78,6 +83,6 @@ fun listEventsAsync(
         items.add(CalendarItem(title, Instant.ofEpochMilli(dtStart), Instant.ofEpochMilli(dtEnd)))
       }
     }
-    
+
     items
   }
