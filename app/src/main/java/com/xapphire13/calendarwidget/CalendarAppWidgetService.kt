@@ -75,10 +75,6 @@ class CalendarAppWidgetFactory(
         itemOverlap[item] = maxOf(overlap, itemsForHour.size)
       }
     }
-
-    itemsByTime.entries.forEach {
-      println(it)
-    }
   }
 
   override fun getLoadingView(): RemoteViews? = null
