@@ -3,6 +3,7 @@ package com.xapphire13.calendarwidget
 import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.Model
@@ -66,8 +67,7 @@ class ConfigureWidgetActivity : AppCompatActivity() {
   private fun onCalendarClicked(calendarId: Long) {
     getSharedPreferences("calendar", Context.MODE_PRIVATE).edit().putLong("id", calendarId).apply()
 
-    val appWidgetManager = AppWidgetManager.getInstance(this)
-    val appWidgetId = intent?.extras?.getInt(
+    val appWidgetId = intent.extras?.getInt(
       AppWidgetManager.EXTRA_APPWIDGET_ID,
       AppWidgetManager.INVALID_APPWIDGET_ID
     ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
@@ -79,7 +79,16 @@ class ConfigureWidgetActivity : AppCompatActivity() {
 
     setResult(Activity.RESULT_OK)
 
-    CalendarAppWidgetProvider().onUpdate(this, appWidgetManager, intArrayOf(appWidgetId))
+    Intent(
+      AppWidgetManager.ACTION_APPWIDGET_UPDATE,
+      null,
+      this,
+      CalendarAppWidgetProvider::class.java
+    ).apply {
+      putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+      sendBroadcast(this)
+    }
+
     finish()
   }
 }

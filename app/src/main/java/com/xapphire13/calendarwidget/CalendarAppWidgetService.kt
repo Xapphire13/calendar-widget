@@ -22,7 +22,15 @@ class CalendarAppWidgetFactory(
   private val itemOverlap: MutableMap<CalendarItem, Int> = mutableMapOf()
   private var itemsByTime: MutableMap<Int, MutableList<CalendarItem>> = mutableMapOf()
 
-  override fun onCreate() {
+  override fun onCreate() {}
+
+  override fun getLoadingView(): RemoteViews? = null
+
+  override fun getItemId(position: Int): Long {
+    return position.toLong()
+  }
+
+  override fun onDataSetChanged() {
     val calendarId = context.getSharedPreferences("calendar", Context.MODE_PRIVATE).getLong("id", 0)
 
     val allCalendarItems = runBlocking {
@@ -96,14 +104,6 @@ class CalendarAppWidgetFactory(
       }
     }
   }
-
-  override fun getLoadingView(): RemoteViews? = null
-
-  override fun getItemId(position: Int): Long {
-    return position.toLong()
-  }
-
-  override fun onDataSetChanged() {}
 
   override fun hasStableIds(): Boolean = false
 

@@ -14,22 +14,25 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
     appWidgetIds: IntArray
   ) {
     appWidgetIds.forEach { appWidgetId ->
-      updateWidget(context, appWidgetManager, appWidgetId)
+      performUpdate(context, appWidgetManager, appWidgetId)
     }
 
     super.onUpdate(context, appWidgetManager, appWidgetIds)
   }
-  
-  private fun updateWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
-    val intent = Intent(context, CalendarAppWidgetService::class.java).apply {
-      putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-      data = Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
-    }
 
-    val rv = RemoteViews(context.packageName, R.layout.widget).apply {
-      setRemoteAdapter(R.id.widget_list, intent)
+  private fun performUpdate(
+    context: Context,
+    appWidgetManager: AppWidgetManager,
+    appWidgetId: Int
+  ) {
+    val rv = RemoteViews(context.packageName, R.layout.widget)
+
+    Intent(context, CalendarAppWidgetService::class.java).apply {
+      data = Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
+      rv.setRemoteAdapter(R.id.widget_list, this)
     }
 
     appWidgetManager.updateAppWidget(appWidgetId, rv)
+    appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.widget_list)
   }
 }
