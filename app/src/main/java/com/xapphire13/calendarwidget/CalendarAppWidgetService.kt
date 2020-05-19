@@ -108,9 +108,17 @@ class CalendarAppWidgetFactory(
   override fun hasStableIds(): Boolean = false
 
   override fun getViewAt(position: Int): RemoteViews {
-    val (hour, calendarItems) = itemsByTime.entries.sortedBy { it.key }[position]
+    if (position == 0 && allDayItems.isNotEmpty()) {
+      return RemoteViews(context.packageName, R.layout.all_day_items_row).apply {
+        removeAllViews(R.id.all_day_items_container)
+        allDayItems.map { createAllDayItemView(it) }.forEach {
+          addView(R.id.all_day_items_container, it)
+        }
+      }
+    }
 
-    // TODO, all day row
+    val index = if (allDayItems.isEmpty()) position else position - 1
+    val (hour, calendarItems) = itemsByTime.entries.sortedBy { it.key }[index]
 
     return RemoteViews(context.packageName, R.layout.calendar_row).apply {
       removeAllViews(R.id.calendar_row_root)
@@ -122,10 +130,10 @@ class CalendarAppWidgetFactory(
   }
 
   override fun getCount(): Int {
-    return allDayItems.size + itemsByTime.entries.size
+    return (if (allDayItems.isEmpty()) 0 else 1) + itemsByTime.entries.size
   }
 
-  override fun getViewTypeCount(): Int = 1
+  override fun getViewTypeCount(): Int = 2
 
   override fun onDestroy() {}
 
@@ -172,7 +180,7 @@ class CalendarAppWidgetFactory(
           setTextViewText(R.id.calendar_item_text, item.name)
         }
 
-        if (item.status === com.xapphire13.calendarwidget.CalendarItemStatus.ACCEPTED) {
+        if (item.status === CalendarItemStatus.ACCEPTED) {
           setViewVisibility(R.id.accepted_background, View.VISIBLE)
         } else {
           setViewVisibility(R.id.pending_background, View.VISIBLE)
@@ -188,5 +196,17 @@ class CalendarAppWidgetFactory(
     }
 
     return cells.filterNotNull()
+  }
+
+  private fun createAllDayItemView(item: CalendarItem): RemoteViews {
+    return RemoteViews(context.packageName, R.layout.all_day_calendar_item).apply {
+      setTextViewText(R.id.calendar_item_text, item.name)
+
+      if (item.status === CalendarItemStatus.ACCEPTED) {
+        setViewVisibility(R.id.all_day_accepted_background, View.VISIBLE)
+      } else {
+        setViewVisibility(R.id.all_day_pending_background, View.VISIBLE)
+      }
+    }
   }
 }
