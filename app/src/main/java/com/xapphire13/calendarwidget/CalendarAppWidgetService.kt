@@ -109,6 +109,27 @@ class CalendarAppWidgetFactory(
 
   override fun getViewAt(position: Int): RemoteViews {
     val (hour, calendarItems) = itemsByTime.entries.sortedBy { it.key }[position]
+
+    // TODO, all day row
+
+    return RemoteViews(context.packageName, R.layout.calendar_row).apply {
+      removeAllViews(R.id.calendar_row_root)
+      addView(R.id.calendar_row_root, createLabelView(hour))
+      createCalendarItemViews(hour, calendarItems).forEach {
+        addView(R.id.calendar_row_root, it)
+      }
+    }
+  }
+
+  override fun getCount(): Int {
+    return allDayItems.size + itemsByTime.entries.size
+  }
+
+  override fun getViewTypeCount(): Int = 1
+
+  override fun onDestroy() {}
+
+  private fun createLabelView(hour: Int): RemoteViews {
     val labelText = when {
       hour == -1 -> "all-day"
       hour == 0 -> "midnight"
@@ -117,14 +138,15 @@ class CalendarAppWidgetFactory(
       else -> "${hour - 12} PM"
     }
 
-    // TODO, all day row
-
-    val rv = RemoteViews(context.packageName, R.layout.calendar_row)
-
-    val labelView = RemoteViews(context.packageName, R.layout.time_label).apply {
+    return RemoteViews(context.packageName, R.layout.time_label).apply {
       setTextViewText(R.id.time_label_text, labelText)
     }
+  }
 
+  private fun createCalendarItemViews(
+    hour: Int,
+    calendarItems: List<CalendarItem>
+  ): List<RemoteViews> {
     val maxOverlap = calendarItems.fold(0) { acc, item ->
       maxOf(acc, itemOverlap.getOrDefault(item, 0))
     }
@@ -150,7 +172,7 @@ class CalendarAppWidgetFactory(
           setTextViewText(R.id.calendar_item_text, item.name)
         }
 
-        if (item.status === CalendarItemStatus.ACCEPTED) {
+        if (item.status === com.xapphire13.calendarwidget.CalendarItemStatus.ACCEPTED) {
           setViewVisibility(R.id.accepted_background, View.VISIBLE)
         } else {
           setViewVisibility(R.id.pending_background, View.VISIBLE)
@@ -165,22 +187,6 @@ class CalendarAppWidgetFactory(
       }
     }
 
-    rv.apply {
-      addView(R.id.calendar_row_root, labelView)
-      cells.forEach {
-        addView(R.id.calendar_row_root, it)
-      }
-    }
-
-    return rv
+    return cells.filterNotNull()
   }
-
-  override fun getCount(): Int {
-    return allDayItems.size + itemsByTime.entries.size
-  }
-
-  override fun getViewTypeCount(): Int = 1
-
-  override fun onDestroy() {}
-
 }
