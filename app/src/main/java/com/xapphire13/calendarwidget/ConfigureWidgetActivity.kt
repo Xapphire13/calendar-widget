@@ -7,24 +7,28 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.Model
+import androidx.ui.core.Alignment
 import androidx.ui.core.Modifier
 import androidx.ui.core.setContent
 import androidx.ui.foundation.Text
-import androidx.ui.graphics.Color
-import androidx.ui.layout.Column
-import androidx.ui.layout.fillMaxWidth
-import androidx.ui.layout.padding
-import androidx.ui.material.Divider
-import androidx.ui.material.ListItem
+import androidx.ui.layout.*
 import androidx.ui.material.MaterialTheme
+import androidx.ui.text.TextStyle
+import androidx.ui.text.font.FontWeight
 import androidx.ui.unit.dp
+import com.xapphire13.calendarwidget.components.ButtonWithDisabledState
+import com.xapphire13.calendarwidget.components.CheckboxGroup
 import com.xapphire13.calendarwidget.utils.listCalendarsAsync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import java.util.*
 
 @Model
-data class ConfigureWidgetState(var calendars: List<CalendarInfo> = listOf())
+data class ConfigureWidgetState(
+  var calendars: List<CalendarInfo> = listOf(),
+  var selectedCalendars: Set<String> = setOf()
+)
 
 val uiScope = CoroutineScope(Dispatchers.Main)
 
@@ -37,23 +41,38 @@ class ConfigureWidgetActivity : AppCompatActivity() {
 
     loadCalendarsAsync()
 
+
     setContent {
+      val isButtonEnabled = state.selectedCalendars.isNotEmpty()
+
       MaterialTheme {
         Column(
-          modifier = Modifier.fillMaxWidth().plus(Modifier.padding(16.dp))
+          verticalArrangement = Arrangement.SpaceBetween,
+          modifier = Modifier.fillMaxWidth().fillMaxHeight().padding(16.dp)
         ) {
-          Text(text = "Choose which calendars to use")
+          Column() {
+            Text(text = "Choose which calendars to use", modifier = Modifier.padding(bottom = 8.dp))
 
-          state.calendars.forEachIndexed { i, calendar ->
-            if (i != 0) {
-              Divider(color = Color.LightGray)
-            }
+            CheckboxGroup(
+              options = state.calendars.map { it.name },
+              selectedOptions = state.selectedCalendars,
+              onChange = { state.selectedCalendars = it })
+          }
 
-            ListItem(
-              onClick = { onCalendarClicked(calendar.id) }
-            ) {
-              Text(text = calendar.name)
-            }
+          ButtonWithDisabledState(
+            onClick = {
+              val calendar = state.calendars.find { it.name == state.selectedCalendars.first() }
+              calendar?.let {
+                onCalendarClicked(it.id)
+              }
+            },
+            enabled = isButtonEnabled,
+            modifier = Modifier.gravity(Alignment.CenterHorizontally).fillMaxWidth()
+          ) {
+            Text(
+              text = "Select".toUpperCase(Locale.getDefault()),
+              style = TextStyle(fontWeight = FontWeight.Bold)
+            )
           }
         }
       }
