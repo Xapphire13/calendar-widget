@@ -1,15 +1,20 @@
 package com.xapphire13.calendarwidget.providers
 
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.SystemClock
 import android.widget.RemoteViews
 import com.xapphire13.calendarwidget.R
 import com.xapphire13.calendarwidget.services.CalendarAppWidgetService
 import com.xapphire13.calendarwidget.utils.listEventsAsync
 import kotlinx.coroutines.runBlocking
+import java.time.temporal.ChronoUnit
 
 class CalendarAppWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(
@@ -17,11 +22,41 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
+        super.onUpdate(context, appWidgetManager, appWidgetIds)
+
         appWidgetIds.forEach { appWidgetId ->
             performUpdate(context, appWidgetManager, appWidgetId)
         }
 
-        super.onUpdate(context, appWidgetManager, appWidgetIds)
+        scheduleNextUpdate(context, appWidgetManager)
+    }
+
+    private fun scheduleNextUpdate(context: Context, appWidgetManager: AppWidgetManager) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val appWidgetIds = appWidgetManager.getAppWidgetIds(
+            ComponentName(
+                context,
+                CalendarAppWidgetProvider::class.java
+            )
+        )
+
+        val intent = Intent(
+            AppWidgetManager.ACTION_APPWIDGET_UPDATE,
+            null,
+            context,
+            CalendarAppWidgetProvider::class.java
+        ).apply {
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds)
+        }
+        val pendingIntent =
+            PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_ONE_SHOT)
+
+        alarmManager.set(
+            AlarmManager.ELAPSED_REALTIME,
+            SystemClock.elapsedRealtime()
+                .plus(ChronoUnit.MINUTES.duration.multipliedBy(2).toMillis()),
+            pendingIntent
+        )
     }
 
     private fun performUpdate(
