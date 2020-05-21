@@ -11,21 +11,22 @@ import androidx.ui.unit.dp
 /**
  * Button that adds disabled state as per https://material.io/design/interaction/states.html#disabled
  */
+@Suppress("FunctionName")
 @Composable
 fun ButtonWithDisabledState(
-  onClick: () -> Unit,
-  modifier: Modifier = Modifier,
-  enabled: Boolean = true,
-  text: @Composable() () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    text: @Composable() () -> Unit
 ) {
-  Button(
-    onClick = onClick,
-    modifier = modifier,
-    enabled = enabled,
-    backgroundColor = if (enabled) MaterialTheme.colors.primary else Color.LightGray,
-    contentColor = if (enabled) contentColorFor(MaterialTheme.colors.primary) else Color.Gray,
-    elevation = if (enabled) 2.dp else 0.dp
-  ) {
-    text()
-  }
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        backgroundColor = if (enabled) MaterialTheme.colors.primary else Color.LightGray,
+        contentColor = if (enabled) contentColorFor(MaterialTheme.colors.primary) else Color.Gray,
+        elevation = if (enabled) 2.dp else 0.dp
+    ) {
+        text()
+    }
 }

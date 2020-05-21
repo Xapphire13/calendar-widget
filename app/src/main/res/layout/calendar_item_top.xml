@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-  android:layout_width="0dp"
-  android:layout_height="match_parent"
-  android:layout_weight="1"
-  android:layout_marginStart="2dp"
-  android:layout_marginTop="2dp">
-
-  <FrameLayout
-    android:layout_width="match_parent"
+    android:layout_width="0dp"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_pending_top"
-    android:visibility="gone"
-    android:id="@+id/pending_background" />
+    android:layout_weight="1"
+    android:layout_marginStart="2dp"
+    android:layout_marginTop="2dp">
 
-  <FrameLayout
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/bg_accepted_top"
-    android:visibility="gone"
-    android:id="@+id/accepted_background" />
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_pending_top"
+        android:visibility="gone"
+        android:id="@+id/pending_background" />
 
-  <TextView
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:id="@+id/calendar_item_text"
-    android:textColor="#FFF"
-    android:paddingHorizontal="4dp"
-    android:textStyle="bold" />
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_accepted_top"
+        android:visibility="gone"
+        android:id="@+id/accepted_background" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/calendar_item_text"
+        android:textColor="#FFF"
+        android:paddingHorizontal="4dp"
+        android:textStyle="bold" />
 
 </FrameLayout>

@@ -7,103 +7,103 @@ import android.provider.CalendarContract
 import com.xapphire13.calendarwidget.models.CalendarInfo
 import com.xapphire13.calendarwidget.models.CalendarItem
 import com.xapphire13.calendarwidget.models.CalendarItemStatus
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 
 val bgScope = CoroutineScope(Dispatchers.IO)
 
 @SuppressLint("MissingPermission")
 fun listCalendarsAsync(contentResolver: ContentResolver): Deferred<List<CalendarInfo>> =
-  bgScope.async {
-    val calendars = mutableListOf<CalendarInfo>()
+    bgScope.async {
+        val calendars = mutableListOf<CalendarInfo>()
 
-    contentResolver.query(
-      CalendarContract.Calendars.CONTENT_URI,
-      arrayOf(
-        CalendarContract.Calendars._ID,
-        CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,
-        CalendarContract.Calendars.ACCOUNT_NAME
-      ),
-      null,
-      null,
-      null
-    ).use { cursor ->
-      while (cursor?.moveToNext() == true) {
-        val calID = cursor.getLong(0)
-        val calName = cursor.getString(1)
-        val accountName = cursor.getString(2)
+        contentResolver.query(
+            CalendarContract.Calendars.CONTENT_URI,
+            arrayOf(
+                CalendarContract.Calendars._ID,
+                CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,
+                CalendarContract.Calendars.ACCOUNT_NAME
+            ),
+            null,
+            null,
+            null
+        ).use { cursor ->
+            while (cursor?.moveToNext() == true) {
+                val calID = cursor.getLong(0)
+                val calName = cursor.getString(1)
+                val accountName = cursor.getString(2)
 
-        calendars.add(
-          CalendarInfo(
-            calID,
-            calName,
-            accountName
-          )
-        )
-      }
+                calendars.add(
+                    CalendarInfo(
+                        calID,
+                        calName,
+                        accountName
+                    )
+                )
+            }
+        }
+
+        calendars
     }
-
-    calendars
-  }
 
 @SuppressLint("MissingPermission")
 fun listEventsAsync(
-  contentResolver: ContentResolver,
-  calendarID: Long
+    contentResolver: ContentResolver,
+    calendarID: Long
 ): Deferred<List<CalendarItem>> =
-  bgScope.async {
-    val builder = CalendarContract.Instances.CONTENT_URI.buildUpon()
-    val items = mutableListOf<CalendarItem>()
+    bgScope.async {
+        val builder = CalendarContract.Instances.CONTENT_URI.buildUpon()
+        val items = mutableListOf<CalendarItem>()
 
-    ContentUris.appendId(
-      builder,
-      LocalDate.now().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-    )
-    ContentUris.appendId(builder, Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
+        ContentUris.appendId(
+            builder,
+            LocalDate.now().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        )
+        ContentUris.appendId(builder, Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli())
 
-    contentResolver.query(
-      builder.build(),
-      arrayOf(
-        CalendarContract.Instances.TITLE,
-        CalendarContract.Instances.DTSTART,
-        CalendarContract.Instances.DTEND,
-        CalendarContract.Instances.STATUS
-      ),
-      """
+        contentResolver.query(
+            builder.build(),
+            arrayOf(
+                CalendarContract.Instances.TITLE,
+                CalendarContract.Instances.DTSTART,
+                CalendarContract.Instances.DTEND,
+                CalendarContract.Instances.STATUS
+            ),
+            """
         ((${CalendarContract.Instances.CALENDAR_ID} = ?))
       """.trimIndent(),
-      arrayOf(
-        calendarID.toString()
-      ),
-      null
-    ).use { cursor ->
-      while (cursor?.moveToNext() == true) {
-        val title = cursor.getString(0)
-        val dtStart = cursor.getLong(1)
-        val dtEnd = cursor.getLong(2)
-        val status = cursor.getInt(3)
+            arrayOf(
+                calendarID.toString()
+            ),
+            null
+        ).use { cursor ->
+            while (cursor?.moveToNext() == true) {
+                val title = cursor.getString(0)
+                val dtStart = cursor.getLong(1)
+                val dtEnd = cursor.getLong(2)
+                val status = cursor.getInt(3)
 
-        val calendarItemStatus = when (status) {
-          CalendarContract.Events.STATUS_CONFIRMED -> CalendarItemStatus.ACCEPTED
-          else -> CalendarItemStatus.PENDING
+                val calendarItemStatus = when (status) {
+                    CalendarContract.Events.STATUS_CONFIRMED -> CalendarItemStatus.ACCEPTED
+                    else -> CalendarItemStatus.PENDING
+                }
+
+                items.add(
+                    CalendarItem(
+                        title,
+                        Instant.ofEpochMilli(dtStart),
+                        Instant.ofEpochMilli(dtEnd),
+                        calendarItemStatus
+                    )
+                )
+            }
         }
 
-        items.add(
-          CalendarItem(
-            title,
-            Instant.ofEpochMilli(dtStart),
-            Instant.ofEpochMilli(dtEnd),
-            calendarItemStatus
-          )
-        )
-      }
+        items
     }
-
-    items
-  }

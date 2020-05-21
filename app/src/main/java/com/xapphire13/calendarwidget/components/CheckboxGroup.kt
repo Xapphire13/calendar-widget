@@ -9,31 +9,31 @@ import androidx.ui.material.Checkbox
 import androidx.ui.material.ListItem
 import androidx.ui.unit.dp
 
+@Suppress("FunctionName")
 @Composable
 fun CheckboxGroup(
-  options: List<String>,
-  selectedOptions: Set<String>,
-  onChange: (Set<String>) -> Unit
+    options: List<String>,
+    selectedOptions: Set<String>,
+    onChange: (Set<String>) -> Unit
 ) {
-  options.forEach {
-    val handleCheckboxPressed = {
-      val isCurrentlySelected = selectedOptions.contains(it)
+    options.forEach {
+        val handleCheckboxPressed = {
+            val isCurrentlySelected = selectedOptions.contains(it)
 
-      if (isCurrentlySelected) {
-        onChange(selectedOptions.toMutableSet().apply { remove(it) })
-      } else {
-        onChange(selectedOptions.toMutableSet().apply { add(it) })
-      }
+            if (isCurrentlySelected) {
+                onChange(selectedOptions.toMutableSet().apply { remove(it) })
+            } else {
+                onChange(selectedOptions.toMutableSet().apply { add(it) })
+            }
+        }
+
+        ListItem(onClick = handleCheckboxPressed) {
+            Row() {
+                Checkbox(
+                    checked = selectedOptions.contains(it),
+                    onCheckedChange = { handleCheckboxPressed() })
+                Text(text = it, modifier = Modifier.padding(start = 8.dp))
+            }
+        }
     }
-
-    ListItem(onClick = handleCheckboxPressed) {
-      Row() {
-        Checkbox(
-          checked = selectedOptions.contains(it),
-          onCheckedChange = { handleCheckboxPressed() })
-        Text(text = it, modifier = Modifier.padding(start = 8.dp))
-      }
-    }
-  }
-
 }

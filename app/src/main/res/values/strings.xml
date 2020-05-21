@@ -1,4 +1,4 @@
 <resources>
-  <string name="app_name">Calendar Widget</string>
-  <string name="title_activity_configure_widget">Configure Widget</string>
+    <string name="app_name">Calendar Widget</string>
+    <string name="title_activity_configure_widget">Configure Widget</string>
 </resources>
