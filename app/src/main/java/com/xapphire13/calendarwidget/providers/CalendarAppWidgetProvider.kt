@@ -8,6 +8,8 @@ import android.net.Uri
 import android.widget.RemoteViews
 import com.xapphire13.calendarwidget.R
 import com.xapphire13.calendarwidget.services.CalendarAppWidgetService
+import com.xapphire13.calendarwidget.utils.listEventsAsync
+import kotlinx.coroutines.runBlocking
 
 class CalendarAppWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(
@@ -27,20 +29,33 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetId: Int
     ) {
-        val rv = RemoteViews(
-            context.packageName,
-            R.layout.widget
-        )
+        val calendarId =
+            context.getSharedPreferences("calendar", Context.MODE_PRIVATE).getLong("id", 0)
 
-        Intent(context, CalendarAppWidgetService::class.java).apply {
-            data = Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
-            rv.setRemoteAdapter(R.id.widget_list, this)
+        val allCalendarItems = runBlocking {
+            listEventsAsync(context.contentResolver, calendarId).await()
         }
 
-        appWidgetManager.updateAppWidget(appWidgetId, rv)
-        appWidgetManager.notifyAppWidgetViewDataChanged(
-            appWidgetId,
-            R.id.widget_list
-        )
+        if (allCalendarItems.isEmpty()) {
+            val rv = RemoteViews(context.packageName, R.layout.no_items)
+
+            appWidgetManager.updateAppWidget(appWidgetId, rv)
+        } else {
+            val rv = RemoteViews(
+                context.packageName,
+                R.layout.widget
+            )
+
+            Intent(context, CalendarAppWidgetService::class.java).apply {
+                data = Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
+                rv.setRemoteAdapter(R.id.widget_list, this)
+            }
+
+            appWidgetManager.updateAppWidget(appWidgetId, rv)
+            appWidgetManager.notifyAppWidgetViewDataChanged(
+                appWidgetId,
+                R.id.widget_list
+            )
+        }
     }
 }
