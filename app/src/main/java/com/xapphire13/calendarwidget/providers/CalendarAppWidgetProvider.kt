@@ -1,4 +1,4 @@
-package com.xapphire13.calendarwidget
+package com.xapphire13.calendarwidget.providers
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.RemoteViews
+import com.xapphire13.calendarwidget.R
+import com.xapphire13.calendarwidget.services.CalendarAppWidgetService
 
 class CalendarAppWidgetProvider : AppWidgetProvider() {
   override fun onUpdate(
@@ -25,7 +27,10 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
     appWidgetManager: AppWidgetManager,
     appWidgetId: Int
   ) {
-    val rv = RemoteViews(context.packageName, R.layout.widget)
+    val rv = RemoteViews(
+      context.packageName,
+      R.layout.widget
+    )
 
     Intent(context, CalendarAppWidgetService::class.java).apply {
       data = Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
@@ -33,6 +38,9 @@ class CalendarAppWidgetProvider : AppWidgetProvider() {
     }
 
     appWidgetManager.updateAppWidget(appWidgetId, rv)
-    appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.widget_list)
+    appWidgetManager.notifyAppWidgetViewDataChanged(
+      appWidgetId,
+      R.id.widget_list
+    )
   }
 }

@@ -6,4 +6,4 @@
   android:initialLayout="@layout/empty"
   android:resizeMode="vertical | horizontal"
   android:widgetCategory="home_screen"
-  android:configure="com.xapphire13.calendarwidget.ConfigureWidgetActivity" />
+  android:configure="com.xapphire13.calendarwidget.activities.ConfigureWidgetActivity" />

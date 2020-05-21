@@ -1,11 +1,14 @@
-package com.xapphire13.calendarwidget
+package com.xapphire13.calendarwidget.services
 
 import android.content.Context
 import android.content.Intent
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
+import com.xapphire13.calendarwidget.R
 import com.xapphire13.calendarwidget.extensions.toLocalDateTime
+import com.xapphire13.calendarwidget.models.CalendarItem
+import com.xapphire13.calendarwidget.models.CalendarItemStatus
 import com.xapphire13.calendarwidget.utils.listEventsAsync
 import kotlinx.coroutines.runBlocking
 
@@ -109,7 +112,10 @@ class CalendarAppWidgetFactory(
 
   override fun getViewAt(position: Int): RemoteViews {
     if (position == 0 && allDayItems.isNotEmpty()) {
-      return RemoteViews(context.packageName, R.layout.all_day_items_row).apply {
+      return RemoteViews(
+        context.packageName,
+        R.layout.all_day_items_row
+      ).apply {
         removeAllViews(R.id.all_day_items_container)
         allDayItems.map { createAllDayItemView(it) }.forEach {
           addView(R.id.all_day_items_container, it)
@@ -120,7 +126,10 @@ class CalendarAppWidgetFactory(
     val index = if (allDayItems.isEmpty()) position else position - 1
     val (hour, calendarItems) = itemsByTime.entries.sortedBy { it.key }[index]
 
-    return RemoteViews(context.packageName, R.layout.calendar_row).apply {
+    return RemoteViews(
+      context.packageName,
+      R.layout.calendar_row
+    ).apply {
       removeAllViews(R.id.calendar_row_root)
       addView(R.id.calendar_row_root, createLabelView(hour))
       createCalendarItemViews(hour, calendarItems).forEach {
@@ -146,7 +155,10 @@ class CalendarAppWidgetFactory(
       else -> "${hour - 12} PM"
     }
 
-    return RemoteViews(context.packageName, R.layout.time_label).apply {
+    return RemoteViews(
+      context.packageName,
+      R.layout.time_label
+    ).apply {
       setTextViewText(R.id.time_label_text, labelText)
     }
   }
@@ -191,7 +203,10 @@ class CalendarAppWidgetFactory(
     // Fill the blanks
     cells.forEachIndexed { i, _ ->
       if (cells[i] == null) {
-        cells[i] = RemoteViews(context.packageName, R.layout.blank_space)
+        cells[i] = RemoteViews(
+          context.packageName,
+          R.layout.blank_space
+        )
       }
     }
 
@@ -199,7 +214,10 @@ class CalendarAppWidgetFactory(
   }
 
   private fun createAllDayItemView(item: CalendarItem): RemoteViews {
-    return RemoteViews(context.packageName, R.layout.all_day_calendar_item).apply {
+    return RemoteViews(
+      context.packageName,
+      R.layout.all_day_calendar_item
+    ).apply {
       setTextViewText(R.id.calendar_item_text, item.name)
 
       if (item.status === CalendarItemStatus.ACCEPTED) {

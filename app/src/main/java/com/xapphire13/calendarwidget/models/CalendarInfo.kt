@@ -1,4 +1,4 @@
-package com.xapphire13.calendarwidget
+package com.xapphire13.calendarwidget.models
 
 data class CalendarInfo(
   val id: Long,

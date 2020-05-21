@@ -4,9 +4,9 @@ import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.provider.CalendarContract
-import com.xapphire13.calendarwidget.CalendarInfo
-import com.xapphire13.calendarwidget.CalendarItem
-import com.xapphire13.calendarwidget.CalendarItemStatus
+import com.xapphire13.calendarwidget.models.CalendarInfo
+import com.xapphire13.calendarwidget.models.CalendarItem
+import com.xapphire13.calendarwidget.models.CalendarItemStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +39,13 @@ fun listCalendarsAsync(contentResolver: ContentResolver): Deferred<List<Calendar
         val calName = cursor.getString(1)
         val accountName = cursor.getString(2)
 
-        calendars.add(CalendarInfo(calID, calName, accountName))
+        calendars.add(
+          CalendarInfo(
+            calID,
+            calName,
+            accountName
+          )
+        )
       }
     }
 

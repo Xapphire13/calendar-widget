@@ -1,4 +1,4 @@
-package com.xapphire13.calendarwidget
+package com.xapphire13.calendarwidget.activities
 
 import android.app.Activity
 import android.appwidget.AppWidgetManager
@@ -18,6 +18,8 @@ import androidx.ui.text.font.FontWeight
 import androidx.ui.unit.dp
 import com.xapphire13.calendarwidget.components.ButtonWithDisabledState
 import com.xapphire13.calendarwidget.components.CheckboxGroup
+import com.xapphire13.calendarwidget.models.CalendarInfo
+import com.xapphire13.calendarwidget.providers.CalendarAppWidgetProvider
 import com.xapphire13.calendarwidget.utils.listCalendarsAsync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

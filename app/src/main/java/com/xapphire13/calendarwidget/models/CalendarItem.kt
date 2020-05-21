@@ -1,4 +1,4 @@
-package com.xapphire13.calendarwidget
+package com.xapphire13.calendarwidget.models
 
 import com.xapphire13.calendarwidget.extensions.toLocalDateTime
 import java.time.Duration

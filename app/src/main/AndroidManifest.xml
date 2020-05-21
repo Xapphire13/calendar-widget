@@ -13,7 +13,7 @@
     android:theme="@style/AppTheme">
 
     <activity
-      android:name=".ConfigureWidgetActivity"
+      android:name=".activities.ConfigureWidgetActivity"
       android:label="@string/title_activity_configure_widget"
       android:theme="@style/AppTheme.AppBarOverlay">
       <intent-filter>
@@ -21,7 +21,7 @@
       </intent-filter>
     </activity>
 
-    <receiver android:name=".CalendarAppWidgetProvider">
+    <receiver android:name=".providers.CalendarAppWidgetProvider">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
       </intent-filter>
@@ -32,7 +32,7 @@
     </receiver>
 
     <service
-      android:name=".CalendarAppWidgetService"
+      android:name=".services.CalendarAppWidgetService"
       android:permission="android.permission.BIND_REMOTEVIEWS" />
   </application>
 
