@@ -5,12 +5,16 @@ import android.content.Intent
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
+import androidx.ui.unit.dp
 import com.xapphire13.calendarwidget.R
 import com.xapphire13.calendarwidget.extensions.toLocalDateTime
+import com.xapphire13.calendarwidget.extensions.toPixels
 import com.xapphire13.calendarwidget.models.CalendarItem
 import com.xapphire13.calendarwidget.models.CalendarItemStatus
 import com.xapphire13.calendarwidget.utils.listEventsAsync
 import kotlinx.coroutines.runBlocking
+import java.time.LocalTime
+import kotlin.math.roundToInt
 
 class CalendarAppWidgetService : RemoteViewsService() {
     override fun onGetViewFactory(intent: Intent): RemoteViewsFactory =
@@ -59,6 +63,13 @@ class CalendarAppWidgetFactory(
 
         if (itemsByTime.isEmpty()) {
             return
+        }
+
+        // Fill in empty between hours
+        val minHour = itemsByTime.keys.min() ?: 0
+        val maxHour = itemsByTime.keys.max() ?: 0
+        for (hour in minHour until maxHour) {
+            itemsByTime.putIfAbsent(hour, mutableListOf())
         }
 
         // Calculate overlaps
@@ -138,6 +149,23 @@ class CalendarAppWidgetFactory(
             addView(R.id.calendar_row_root, createLabelView(hour))
             createCalendarItemViews(hour, calendarItems).forEach {
                 addView(R.id.calendar_row_root, it)
+            }
+
+            val currentTime = LocalTime.now()
+
+            if (currentTime.hour == hour) {
+                val percentageOfHour = currentTime.minute.toFloat() / 60
+
+                setViewVisibility(R.id.hour_rule, View.VISIBLE)
+                setViewPadding(
+                    R.id.hour_rule,
+                    0,
+                    (percentageOfHour * 40).dp.toPixels(context).roundToInt(),
+                    0,
+                    0
+                )
+            } else {
+                setViewVisibility(R.id.hour_rule, View.GONE)
             }
         }
     }
