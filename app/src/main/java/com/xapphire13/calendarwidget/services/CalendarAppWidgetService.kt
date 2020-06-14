@@ -27,7 +27,7 @@ class CalendarAppWidgetFactory(
     private var allDayItems: List<CalendarItem> = listOf()
     private val itemColumn: MutableMap<CalendarItem, Int> = mutableMapOf()
     private val itemOverlap: MutableMap<CalendarItem, Int> = mutableMapOf()
-    private var itemsByTime: MutableMap<Int, MutableList<CalendarItem>> = mutableMapOf()
+    private val itemsByTime: MutableMap<Int, MutableList<CalendarItem>> = mutableMapOf()
 
     override fun onCreate() = Unit
 
@@ -38,6 +38,10 @@ class CalendarAppWidgetFactory(
     }
 
     override fun onDataSetChanged() {
+        itemColumn.clear()
+        itemOverlap.clear()
+        itemsByTime.clear()
+
         val calendarId =
             context.getSharedPreferences("calendar", Context.MODE_PRIVATE).getLong("id", 0)
 
